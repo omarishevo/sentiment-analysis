@@ -1,9 +1,9 @@
-# sentiment_app.py
+# upgraded_sentiment_app.py
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Minimal Sentiment Analysis", layout="wide")
-st.title("😊 Minimal Sentiment Analysis ")
+st.set_page_config(page_title="Enhanced Sentiment Analysis", layout="wide")
+st.title("😊 Enhanced Sentiment Analysis Dashboard (Streamlit + Pandas Only)")
 
 # ------------------------
 # 1. Load or generate dataset
@@ -16,9 +16,14 @@ def generate_sample_data():
             "Best purchase ever, highly recommend",
             "Worst service, will never buy again",
             "Absolutely fantastic, five stars",
-            "Not good, it broke immediately"
+            "Not good, it broke immediately",
+            "Great value for money, very happy",
+            "Awful, never coming back",
+            "Excellent product, works perfectly",
+            "Poor quality, very bad experience"
         ],
-        "sentiment": ["positive", "negative", "positive", "negative", "positive", "negative"]
+        "sentiment": ["positive", "negative", "positive", "negative", "positive",
+                      "negative", "positive", "negative", "positive", "negative"]
     }
     return pd.DataFrame(data)
 
@@ -32,11 +37,14 @@ st.subheader("Sample Dataset")
 st.dataframe(df)
 
 # ------------------------
-# 2. Simple rule-based sentiment analysis
+# 2. Define positive/negative words
 # ------------------------
-positive_words = ["love", "amazing", "best", "highly recommend", "fantastic", "great", "excellent"]
-negative_words = ["terrible", "worst", "disappointed", "broke", "bad", "poor", "awful"]
+positive_words = ["love", "amazing", "best", "highly recommend", "fantastic", "great", "excellent", "happy", "perfectly"]
+negative_words = ["terrible", "worst", "disappointed", "broke", "bad", "poor", "awful", "never"]
 
+# ------------------------
+# 3. Sentiment Prediction Functions
+# ------------------------
 def predict_sentiment(text):
     text_lower = str(text).lower()
     pos_count = sum(word in text_lower for word in positive_words)
@@ -48,17 +56,54 @@ def predict_sentiment(text):
     else:
         return "neutral"
 
-df["predicted_sentiment"] = df["text"].apply(predict_sentiment)
-
-st.subheader("Predicted Sentiment on Dataset")
-st.dataframe(df)
+def detected_words(text):
+    text_lower = str(text).lower()
+    pos = [w for w in positive_words if w in text_lower]
+    neg = [w for w in negative_words if w in text_lower]
+    return pos, neg
 
 # ------------------------
-# 3. Interactive sentiment prediction
+# 4. Apply sentiment prediction to dataset
+# ------------------------
+df["predicted_sentiment"] = df["text"].apply(predict_sentiment)
+df["pos_count"] = df["text"].apply(lambda x: sum(word in x.lower() for word in positive_words))
+df["neg_count"] = df["text"].apply(lambda x: sum(word in x.lower() for word in negative_words))
+
+# ------------------------
+# 5. Sentiment Distribution Chart
+# ------------------------
+st.subheader("Sentiment Distribution")
+sentiment_counts = df["predicted_sentiment"].value_counts()
+st.bar_chart(sentiment_counts)
+
+# ------------------------
+# 6. Filter Dataset by Sentiment
+# ------------------------
+st.subheader("Filter Dataset by Sentiment")
+sentiment_filter = st.selectbox("Select Sentiment", ["All", "Positive", "Negative", "Neutral"])
+if sentiment_filter != "All":
+    st.dataframe(df[df["predicted_sentiment"] == sentiment_filter])
+else:
+    st.dataframe(df)
+
+# ------------------------
+# 7. Top Positive and Negative Reviews
+# ------------------------
+st.subheader("Top Positive Reviews")
+st.dataframe(df.sort_values('pos_count', ascending=False).head(5)[['text', 'predicted_sentiment']])
+
+st.subheader("Top Negative Reviews")
+st.dataframe(df.sort_values('neg_count', ascending=False).head(5)[['text', 'predicted_sentiment']])
+
+# ------------------------
+# 8. Interactive Prediction
 # ------------------------
 st.subheader("Try Your Own Text")
 user_input = st.text_area("Enter text to analyze sentiment")
 
 if st.button("Predict Sentiment"):
     prediction = predict_sentiment(user_input)
+    pos_words, neg_words = detected_words(user_input)
     st.write(f"Predicted Sentiment: **{prediction.upper()}**")
+    st.write("Positive words detected:", pos_words)
+    st.write("Negative words detected:", neg_words)
