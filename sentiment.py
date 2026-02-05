@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Enhanced Sentiment Analysis", layout="wide")
-st.title("😊 Enhanced Sentiment Analysis Dashboard (Streamlit + Pandas Only)")
+st.title("😊 Enhanced Sentiment Analysis Dashboard ")
 
 # ------------------------
 # 1. Load or generate dataset
